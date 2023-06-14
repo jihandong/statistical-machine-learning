@@ -1,6 +1,7 @@
 from sklearn.datasets import load_iris
-import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import time
 
 
@@ -8,32 +9,33 @@ class Perceptron:
     def __init__(self, x, y, p, stride):
         # Shuffle the x,y in the same order.
         order = np.random.permutation(x.shape[0])
-        x = x[order]
-        y = y[order]
+        self.x = x[order]
+        self.y = y[order]
 
         # Split data for training and testing.
         idx = int(p * x.shape[0])
-        self.train_x = x[:idx]
-        self.train_y = y[:idx]
-        self.test_x = x[idx:]
-        self.test_y = y[idx:]
+        self.train_x = self.x[:idx]
+        self.train_y = self.y[:idx]
+        self.test_x  = self.x[idx:]
+        self.test_y  = self.y[idx:]
+        print("Load %d samples, %d for traing, %d for testing"\
+            % (x.shape[0], idx, x.shape[0] - idx))
 
         # Configure with hyper-parameters.
         self.configure(np.random.rand(self.train_x.shape[1]), 0, stride)
 
     def configure(self, w, b, stride):
-        self.w = w
-        self.b = b
+        self.w      = w
+        self.b      = b
         self.stride = stride
 
     def perceive(self, x, y):
         # Apply classify function.
         predict_y = np.dot(x, self.w) + self.b
-        predict_y = np.where(predict_y > 0, 1, -1)
+        result = y * predict_y
 
         # Get mis-classify entries.
-        result = y * predict_y
-        error_entries = np.where(result < 0)[0]
+        error_entries = np.where(result <= 0)[0]
         return error_entries
 
     def train(self):
@@ -62,14 +64,31 @@ class Perceptron:
         print("Testing accuracy = %f" % accuracy)
 
     def show(self):
-        pass
+        # Random choose two features to display.
+        idx1, idx2 = np.random.choice(self.x.shape[1], 2, replace=False)
+
+        # Draw hyper-space.
+        left   = self.x[:,idx1].min()
+        right  = self.x[:,idx1].max()
+        length = 0.1 * (right - left)
+        line_x = np.linspace(left - length, right + length)
+        line_y = - (self.w[idx1] * line_x + self.b) / self.w[idx2]
+        plt.plot(line_x, line_y)
+
+        # Draw samples.
+        xa = self.x[self.y == 1]
+        xb = self.x[self.y == -1]
+        plt.scatter(xa[:,idx1], xa[:,idx2], label="Positive")
+        plt.scatter(xb[:,idx1], xb[:,idx2], label="Negative")
+
+        plt.legend()
+        plt.show()
 
 
 if __name__ == '__main__':
     # Prepare iris data.
     iris = load_iris()
     x = iris.data
-    y = iris.target
     y = np.where(iris.target > 0, 1, -1)
 
     # Apply classic perceptron model.
