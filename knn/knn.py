@@ -3,49 +3,76 @@ import numpy as np
 
 
 class KdTree:
-    def __init__(self, data, axis=0, df=True):
+    def __init__(self, x, y, axis=0, df=True):
         self.axis = axis
         self.left = None
         self.right = None
-        self.median = None
+        self.father = None
+        self.distance = None # Kept for nearest point search.
         if df:
-            self.dfg(data) # Depth first.
+            self.dfg(x, y) # Depth first.
         else:
-            self.bfg(data) # Broad first.
+            self.bfg(x, y) # Broad first.
 
-    def dfg(self, data):
+    def dfg(self, x, y):
         # Choose median ponint.
-        sorted_indices = np.argsort(data[:,self.axis])
-        sorted_data = data[sorted_indices]
-        median_idx = sorted_data.shape[0] // 2
+        sorted_indices = np.argsort(x[:,self.axis])
+        sorted_x = x[sorted_indices]
+        sorted_y = y[sorted_indices]
+        median_idx = sorted_x.shape[0] // 2
 
         # Split data into left, median, and right parts.
-        left = sorted_data[:median_idx, :]
-        right = sorted_data[median_idx + 1:, :]
-        self.median = data[median_idx]
+        left_x = sorted_x[:median_idx, :]
+        left_y = sorted_y[:median_idx]
+        right_x = sorted_x[median_idx + 1:, :]
+        right_y = sorted_y[median_idx + 1:]
+        self.median = sorted_x[median_idx]
+        self.label = sorted_y[median_idx]
 
         # Recursively generate the subtrees.
-        axis = (self.axis + 1) % data.shape[1]
-        if (left.size > 0):
-            self.left = KdTree(left, axis, df=True)
-        if (right.size > 0):
-            self.right = KdTree(right, axis, df=True)
+        axis = (self.axis + 1) % left_x.shape[1]
+        if (left_x.size > 0):
+            self.left = KdTree(left_x, left_y, axis, df=True)
+            self.left.father = self
+        if (right_x.size > 0):
+            self.right = KdTree(right_x, right_y, axis, df=True)
+            self.right.father = self
 
     def bfg(self):
         pass
 
     def show(self, str=""):
-        print("axis =", self.axis, "median", str, "=", self.median)
+        print("axis = %d, label = %d, median %s = " %\
+              (self.axis, self.label, str), self.median)
         if (self.left):
             self.left.show(str + "l")
         if (self.right):
             self.right.show(str + "r")
         pass
 
+    def distance(self, x1, x2):
+        pass
+
+    def search(self, x):
+        """
+        Top-down search leaf node.
+        """
+        node = self.left if x[self.axis] <= self.median[self.axis]\
+            else self.right
+
+        return node.search() if node else self
+
+    def backtrack(self, x, k, points, distances):
+        """
+        Bottom-up check father and cousin nodes.
+        """
+        pass
+        
+
 
 class KnnClassifier:
     def __init__(self, x, y, k):
-        self.kdtree = KdTree(x)
+        self.kdtree = KdTree(x, y)
         self.kdtree.show()
         self.k = k
 
@@ -53,6 +80,9 @@ class KnnClassifier:
         pass
 
     def train(self):
+        pass
+
+    def validate(self):
         pass
 
     def test(self):
