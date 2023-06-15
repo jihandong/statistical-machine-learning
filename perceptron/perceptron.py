@@ -22,11 +22,8 @@ class Perceptron:
               % (x.shape[0], idx, x.shape[0] - idx))
 
         # Configure with hyper-parameters.
-        self.configure(np.random.rand(self.train_x.shape[1]), 0, stride)
-
-    def configure(self, w, b, stride):
-        self.w = w
-        self.b = b
+        self.w = np.random.rand(self.train_x.shape[1])
+        self.b = 0
         self.stride = stride
 
     def perceive(self, x, y):
