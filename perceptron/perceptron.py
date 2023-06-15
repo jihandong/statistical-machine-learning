@@ -16,17 +16,17 @@ class Perceptron:
         idx = int(p * x.shape[0])
         self.train_x = self.x[:idx]
         self.train_y = self.y[:idx]
-        self.test_x  = self.x[idx:]
-        self.test_y  = self.y[idx:]
-        print("Load %d samples, %d for traing, %d for testing"\
-            % (x.shape[0], idx, x.shape[0] - idx))
+        self.test_x = self.x[idx:]
+        self.test_y = self.y[idx:]
+        print("Load %d samples, %d for traing, %d for testing"
+              % (x.shape[0], idx, x.shape[0] - idx))
 
         # Configure with hyper-parameters.
         self.configure(np.random.rand(self.train_x.shape[1]), 0, stride)
 
     def configure(self, w, b, stride):
-        self.w      = w
-        self.b      = b
+        self.w = w
+        self.b = b
         self.stride = stride
 
     def perceive(self, x, y):
@@ -49,7 +49,8 @@ class Perceptron:
             if (error_entries.size > 0):
                 idx = np.random.choice(error_entries)
                 # Update paramters.
-                self.w = self.w + self.stride * self.train_y[idx] * self.train_x[idx]
+                self.w = self.w + self.stride * \
+                    self.train_y[idx] * self.train_x[idx]
                 self.b = self.b + self.stride * self.train_y[idx]
             else:
                 break
@@ -64,22 +65,25 @@ class Perceptron:
         print("Testing accuracy = %f" % accuracy)
 
     def show(self):
+        if (self.x.shape[1] > 2):
+            return
+
         # Random choose two features to display.
         idx1, idx2 = np.random.choice(self.x.shape[1], 2, replace=False)
 
         # Draw hyper-space.
-        left   = self.x[:,idx1].min()
-        right  = self.x[:,idx1].max()
-        length = 0.1 * (right - left)
-        line_x = np.linspace(left - length, right + length)
+        left = self.x[:, idx1].min()
+        right = self.x[:, idx1].max()
+        length = 0.15 * (right - left)
+        line_x = np.linspace(left + length, right - length)
         line_y = - (self.w[idx1] * line_x + self.b) / self.w[idx2]
         plt.plot(line_x, line_y)
 
         # Draw samples.
         xa = self.x[self.y == 1]
         xb = self.x[self.y == -1]
-        plt.scatter(xa[:,idx1], xa[:,idx2], label="Positive")
-        plt.scatter(xb[:,idx1], xb[:,idx2], label="Negative")
+        plt.scatter(xa[:, idx1], xa[:, idx2], label="Positive")
+        plt.scatter(xb[:, idx1], xb[:, idx2], label="Negative")
 
         plt.legend()
         plt.show()
