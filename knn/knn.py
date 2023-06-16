@@ -152,22 +152,38 @@ class KdTree:
         pass
 
 
-class KnnClassifier:
-    def __init__(self, x, y):
-        self.kdtree = KdTree(x, y, debug=True)
-        self.kdtree.vote(x[30], 3, debug=True)
+class KNN:
+    def __init__(self, x, y, k1, k2=None, p1=0.5, p2=0.25, debug=False):
+        # Shuffle the x,y in the same order.
+        order = np.random.permutation(x.shape[0])
+        x = x[order]
+        y = y[order]
 
-    def classify(self):
+        # Split data for training, validation and testing.
+        idx1 = int(p1 * x.shape[0])
+        idx2 = int((p1 + p2) * x.shape[0])
+        self.train_x = x[:idx1]
+        self.train_y = y[:idx1]
+        self.validate_x = x[idx1:idx2]
+        self.validate_y = y[idx1:idx2]
+        self.test_x = x[idx2:]
+        self.test_y = y[idx2:]
+
+        # Configure with hyper-parameters.
+        self.k1 = k1
+        self.k2 = k2 if k2 else k1
+        self.debug = debug
+
+    def validate(self, x, y, k):
         pass
 
     def train(self):
-        pass
-
-    def validate(self):
+        self.model = KdTree(self.train_x, self.train_y, debug=self.debug)
         pass
 
     def test(self):
         pass
+
 
 
 if __name__ == '__main__':
@@ -177,4 +193,6 @@ if __name__ == '__main__':
     y = iris.target
 
     # Train and test with KNN model.
-    knn = KnnClassifier(x, y)
+    knn = KNN(x, y, 3, 6, debug=True)
+    knn.train()
+    knn.test()
