@@ -1,4 +1,5 @@
 from sklearn.datasets import load_iris
+from collections import Counter
 import numpy as np
 import heapq
 
@@ -14,7 +15,6 @@ class KdTree:
         self.dfg(x, y) if dfg else self.bfg(x, y)
         if (debug):
             self.display()
-
 
     def __lt__(self, other):
         """
@@ -74,7 +74,7 @@ class KdTree:
             self.right.display(str + "r")
 
     #############################################################################
-    # KdTree Search Methods
+    # KdTree Search Methods (knn support)
     #############################################################################
 
     class Neighbors:
@@ -96,6 +96,11 @@ class KdTree:
 
         def farest(self):
             return heapq.nsmallest(1, self.neighbors)[0]
+        
+        def vote(self):
+            labels = [node.label for node in self.neighbors]
+            result = Counter(labels)
+            return result.most_common(1)[0][0]
 
     def update(self, x, neighbors):
         """
@@ -144,16 +149,16 @@ class KdTree:
     def vote(self, x, k, debug=False):
         """
         Get k nearest neighbors and vote for classification.
-        FIXME: the search and backtrack shall be check
-               the end condition must be bug.
         """
         neighbors = KdTree.Neighbors(k, debug)
         self.search(x, neighbors)
-        pass
+        return neighbors.vote()
 
 
 class KNN:
-    def __init__(self, x, y, k1, k2=None, p1=0.5, p2=0.25, debug=False):
+    def __init__(self, x, y, p1=0.5, p2=0.25, debug=False):
+        self.debug = debug
+
         # Shuffle the x,y in the same order.
         order = np.random.permutation(x.shape[0])
         x = x[order]
@@ -168,22 +173,32 @@ class KNN:
         self.validate_y = y[idx1:idx2]
         self.test_x = x[idx2:]
         self.test_y = y[idx2:]
-
-        # Configure with hyper-parameters.
-        self.k1 = k1
-        self.k2 = k2 if k2 else k1
-        self.debug = debug
-
-    def validate(self, x, y, k):
-        pass
+    
+    def classify(self, x, y, k):
+        """
+        Classify base on neighbors' vote.
+        """
+        classified_y = np.apply_along_axis(lambda p: self.kdtree.vote(p, k),
+                                           axis=1, arr=x)
+        result = np.sum(classified_y == y)
+        return 1.0 * result / x.shape[0]
 
     def train(self):
-        self.model = KdTree(self.train_x, self.train_y, debug=self.debug)
-        pass
+        self.kdtree = KdTree(self.train_x, self.train_y, debug=self.debug)
 
-    def test(self):
-        pass
+    def validate(self, k1, k2=None):
+        # Try parameter from k1 to k2.
+        accuracies = [(k, self.classify(self.validate_x, self.validate_y, k))
+                      for k in range(k1, (k2 if k2 else k1) + 1)]
+        sorted_accuracies = sorted(accuracies, key=lambda p: p[0])
+        self.k = sorted_accuracies[0][0]
+        print("Validation pick k = %d" % self.k)
+        return self.k
 
+    def test(self, k=None):
+        accuracy = self.classify(self.test_x, self.test_y, k if k else self.k)
+        print("Accuracy = %f" % accuracy)
+        return accuracy
 
 
 if __name__ == '__main__':
@@ -193,6 +208,7 @@ if __name__ == '__main__':
     y = iris.target
 
     # Train and test with KNN model.
-    knn = KNN(x, y, 3, 6, debug=True)
+    knn = KNN(x, y, debug=True)
     knn.train()
+    knn.validate(3, 7)
     knn.test()
