@@ -96,7 +96,7 @@ class KdTree:
 
         def farest(self):
             return heapq.nsmallest(1, self.neighbors)[0]
-        
+
         def vote(self):
             labels = [node.label for node in self.neighbors]
             result = Counter(labels)
@@ -173,7 +173,7 @@ class KNN:
         self.validate_y = y[idx1:idx2]
         self.test_x = x[idx2:]
         self.test_y = y[idx2:]
-    
+
     def classify(self, x, y, k):
         """
         Classify base on neighbors' vote.

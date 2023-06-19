@@ -4,6 +4,9 @@ import time
 
 class NaiveBayes:
     def __init__(self, x, y, p=0.7, smooth=1, debug=False):
+        # Configure with hyper-parameters.
+        self.p = p
+        self.smooth = smooth
         self.debug = debug
         self.delim = "-" * 64 + "\n"
 
@@ -13,16 +16,14 @@ class NaiveBayes:
         self.y = y[order]
 
         # Split data for training and testing.
-        idx = int(p * x.shape[0])
+        idx = int(self.p * x.shape[0])
         self.train_x = self.x[:idx]
         self.train_y = self.y[:idx]
         self.test_x = self.x[idx:]
         self.test_y = self.y[idx:]
-        print(self.delim, "Load %d samples, %d for traing, %d for testing"
-              % (x.shape[0], idx, x.shape[0] - idx))
-
-        # Configure with hyper-parameters.
-        self.smooth = smooth
+        if (self.debug):
+            print(self.delim, "Load %d samples, %d for traing, %d for testing"
+                % (x.shape[0], idx, x.shape[0] - idx))
 
     def train(self):
         """
@@ -65,14 +66,13 @@ class NaiveBayes:
 
         end_time = time.perf_counter()
         run_time = end_time - start_time
-        print("Training costs %fs, smooth %d" % (run_time, self.smooth))
-
-        if (self.debug):
+        if self.debug:
             for i, p_x in enumerate(self.p_x_y):
                 print(self.delim, "p_y%d =" % i, self.p_y[i])
                 for j, p_xj in enumerate(p_x):
                     print(self.delim, "p_x%d_y%d =" % (j, i), p_xj)
                 print(self.delim)
+            print("Training costs %fs" % run_time)
 
     def classify(self, x):
         """
@@ -98,7 +98,8 @@ class NaiveBayes:
                                            axis=1, arr=self.test_x)
         result = np.sum(classified_y == self.test_y)
         accuracy = 1.0 * result / self.test_x.shape[0]
-        print("Accuracy = %f" % accuracy)
+        print("Accuracy = %f, p = %f, smooth = %d"
+              % (accuracy, self.p, self.smooth))
 
 
 if __name__ == '__main__':
@@ -109,7 +110,7 @@ if __name__ == '__main__':
 
     # Apply naive bayes.
     ptrain = [0.5, 0.6, 0.7]
-    smooth = [1, 2, 4, 8]
+    smooth = [0, 1, 2, 4, 8]
     for p in ptrain:
         for s in smooth:
             model = NaiveBayes(x, y, p=p, smooth=s)
